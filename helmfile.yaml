@@ -1,0 +1,39 @@
+repositories:
+- name: incubator
+  url: https://kubernetes-charts-incubator.storage.googleapis.com/
+- name: openfaas
+  url: https://openfaas.github.io/faas-netes
+releases:
+- name: namespaces
+  chart: incubator/raw
+  values:
+  - resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: openfaas
+        labels:
+          role: openfaas-system
+          access: openfaas-system
+      spec: {}
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: openfaas-fn
+        labels:
+          role: openfaas-fn
+      spec: {}
+- name: openfaas
+  namespace: openfaas
+  chart: openfaas/openfaas
+  set:
+  - name: basic_auth
+    value: false
+  - name: functionNamespace
+    value: openfaas-fn
+  - name: operator.create
+    value: true
+  - name: operator.createCRD
+    value: true
+  - name: faasnetes.imagePullPolicy
+    value: Never
