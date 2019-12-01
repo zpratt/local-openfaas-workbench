@@ -16,7 +16,7 @@ This repository contains my notes for how to quickly provision a local environme
 4. Install OpenFaaS to the local kind cluster: `helmfile apply`
 5. Show the state of the installed chart: `helm list -n openfaas`
 6. Wait for OpenFaaS pods to become ready: `kubectl get po -n openfaas --watch`
-7. Add `127.0.0.1 gateway.openfaas.local` to `/etc/hosts` to map the default host entry for OpenFaaS host entries
+7. Add `127.0.0.1 gateway.openfaas.local` to `/etc/hosts` to map the [default host entry](https://github.com/openfaas/faas-netes/blob/master/chart/openfaas/values.yaml#L118) for OpenFaaS ingress
 8. Open http://gateway.openfaas.local:30080/ui/ to verify you can see the OpenFaaS UI
 
 ## Create a hello world function to verify everything is working correctly
