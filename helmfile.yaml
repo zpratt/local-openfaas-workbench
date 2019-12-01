@@ -1,4 +1,6 @@
 repositories:
+- name: stable
+  url: https://kubernetes-charts.storage.googleapis.com/
 - name: incubator
   url: https://kubernetes-charts-incubator.storage.googleapis.com/
 - name: openfaas
@@ -23,6 +25,23 @@ releases:
         labels:
           role: openfaas-fn
       spec: {}
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: nginx
+      spec: {}
+- name: nginx-ingress
+  namespace: nginx
+  chart: stable/nginx-ingress
+  set:
+    - name: controller.kind
+      value: DaemonSet
+    - name: controller.service.type
+      value: NodePort
+    - name: controller.service.nodePorts.http
+      value: 30080
+    - name: controller.service.nodePorts.https
+      value: 30443
 - name: openfaas
   namespace: openfaas
   chart: openfaas/openfaas
@@ -37,3 +56,5 @@ releases:
     value: true
   - name: faasnetes.imagePullPolicy
     value: Never
+  - name: ingress.enabled
+    value: true
