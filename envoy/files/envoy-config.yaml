@@ -88,5 +88,4 @@ static_resources:
         - socket_address:
             address: {{ .host }}
             port_value: {{ .port }}  # needs to be the port that keycloak is listening on
-      tls_context: { sni: {{ .host }} }
   {{- end }}

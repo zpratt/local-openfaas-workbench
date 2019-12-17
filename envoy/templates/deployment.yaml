@@ -16,6 +16,10 @@ spec:
       annotations:
         checksum/envoy-config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
+      hostAliases:
+        - ip: "{{ .Values.envoy.keycloakHostIp }}"
+          hostnames:
+            - keycloak.openfaas.local
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -37,6 +41,8 @@ spec:
             - envoy
             - -c
             - /etc/envoy-config/config.yaml
+            - --log-level
+            - debug
           volumeMounts:
             - name: envoy-config
               mountPath: /etc/envoy-config

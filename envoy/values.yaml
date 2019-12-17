@@ -14,19 +14,14 @@ fullnameOverride: ""
 
 envoy:
   port: 8080
+  keycloakHostIp: "127.0.0.1"
   providers:
     - name: keycloak-external
       host: keycloak.openfaas.local
       port: 30080
       realm: local
       audiences:
-        - local-client
-    - name: keycloak-internal
-      host: keycloak-http.keycloak
-      port: 80
-      realm: local
-      audiences:
-        - local-client
+        - account
 
 openfaas:
   gateway:

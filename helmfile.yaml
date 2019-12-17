@@ -106,4 +106,7 @@ releases:
       - namespaces
     values:
       - "./envoy/values.yaml"
+    set:
+      - name: envoy.keycloakHostIp
+        value: "{{ requiredEnv "KEYCLOAK_IP" | trim }}"
     wait: true
