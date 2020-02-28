@@ -1,0 +1,91 @@
+static_resources:
+  listeners:
+    - address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: {{ .Values.envoy.port }}
+      filter_chains:
+        - filters:
+            - name: envoy.http_connection_manager
+              config:
+                codec_type: auto
+                stat_prefix: ingress_http
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: backend
+                      domains:
+                        - "*"
+                      routes:
+                        - match:
+                            prefix: "/" # need to update this to forward to the functions, async-functions, system, etc paths of openfaas
+                          route:
+                            cluster: {{ include "envoy.fullname" . }}
+                            timeout: 60s
+                http_filters:
+                  - name: envoy.filters.http.jwt_authn
+                    config:
+                      providers:
+                      {{- range .Values.envoy.providers }}
+                        {{ .name }}:
+                          audiences:
+                        {{- range .audiences }}
+                            - {{ . }}
+                        {{- end }}
+                          issuer: "http://{{ .host }}:{{ .port }}/auth/realms/{{ .realm }}"
+                          remote_jwks:
+                            http_uri:
+                              uri: "http://{{ .host }}:{{ .port }}/auth/realms/{{ .realm }}/protocol/openid-connect/certs"
+                              cluster: {{ .name }}
+                          forward: true
+                      {{- end }}
+                      rules:
+                        - match:
+                            prefix: /
+                          requires:
+                            {{- if eq (len .Values.envoy.providers) 1 }}
+                              {{- range .Values.envoy.providers }}
+                              provider_name: {{ .name }}
+                              {{- end }}
+                            {{- else }}
+                              requires_any:
+                                requirements:
+                                {{- range .Values.envoy.providers }}
+                                - provider_name: {{ .name }}
+                                {{- end }}
+                            {{- end }}
+                  - name: envoy.router
+                    config: {}
+                access_log:
+                  name: envoy.file_access_log
+                  config:
+                    path: /dev/stdout
+                    json_format:
+                      time: "%START_TIME%"
+                      xff: "%REQ(X-FORWARDED-FOR)%"
+                      src: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
+                      protocol: "%PROTOCOL%"
+                      method: "%REQ(:METHOD)%"
+                      path: "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%"
+                      response: "%RESPONSE_CODE%"
+                      duration: "%DURATION%"
+                      ua: "%REQ(USER-AGENT)%"
+                      id: "%REQ(X-REQUEST-ID)%"
+  clusters:
+    - name: {{ include "envoy.fullname" . }}
+      connect_timeout: 0.25s
+      type: strict_dns
+      lb_policy: ROUND_ROBIN
+      hosts:
+        - socket_address:
+            address: {{ .Values.openfaas.gateway.host }} # needs to be the service name of the openfaas gateway
+            port_value: {{ .Values.openfaas.gateway.port }}
+  {{- range .Values.envoy.providers }}
+    - name: {{ .name }}
+      connect_timeout: 1s
+      type: strict_dns
+      hosts:
+        - socket_address:
+            address: {{ .host }}
+            port_value: {{ .port }}  # needs to be the port that keycloak is listening on
+  {{- end }}

@@ -13,7 +13,7 @@ This repository contains my notes for how to quickly provision a local environme
 1. `kind create cluster`
 2. Ensure you're using the kind cluster context with kubectl: `kubectl config set current-context kind-kind`
 3. Verify the cluster is working: `kubectl get nodes`
-4. Install OpenFaaS to the local kind cluster: `helmfile apply`
+4. Install OpenFaaS to the local kind cluster: `KEYCLOAK_PASSWORD=foo helmfile apply`
 5. Show the state of the installed chart: `helm list -n openfaas`
 6. Wait for OpenFaaS pods to become ready: `kubectl get po -n openfaas --watch`
 7. Add `127.0.0.1 gateway.openfaas.local` to `/etc/hosts` to map the [default host entry](https://github.com/openfaas/faas-netes/blob/master/chart/openfaas/values.yaml#L118) for OpenFaaS ingress
@@ -37,6 +37,10 @@ When you're done, you can wipe the slate clean by running:
 
 * `kind delete cluster`
 
+## Troubleshooting Notes
+
+* Watch envoy logs: `kubectl logs -n envoy -f $(kubectl get po -n envoy -o=jsonpath='{.items[].metadata.name}')`
+
 ## TODO
 
 * [ ] Investigate using knative build with OpenFaaS
@@ -50,6 +54,10 @@ When you're done, you can wipe the slate clean by running:
   * https://kind.sigs.k8s.io/docs/user/private-registries/
 * [ ] Create a node 12 hapi-based template, possibly submit it to OpenFaaS
 * [ ] Add OIDC-based authentication
+  * The OpenFaaS Gateway supports OIDC, but [requires a commercial license](https://docs.openfaas.com/reference/authentication/#oauth2-support-in-the-api-gateway-commercial-add-on). It should be possible to work around this with a combination of Keycloak and Envoy.
+  * Using Keycloak has the added advantage of having your IdP manage user and service credentials from one location.
+* [ ] Add CoreDNS for a local DNS provider for services
+* [ ] Include an example function that [leverages a secret](https://docs.openfaas.com/reference/secrets/#use-the-secret-in-your-function)
 
 ## References
 
